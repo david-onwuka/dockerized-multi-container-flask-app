@@ -21,7 +21,6 @@ This project demonstrates a complete web application setup with multiple contain
    ```bash
    git clone https://github.com/david-onwuka/dockerized-multi-container-flask-app
 
-cat >> README.md <<'EOF'
 
 ## GitOps CI/CD Upgrade
 
