@@ -1,59 +1,236 @@
-# Dockerized Multi-Container App
+# Dockerized Multi-Container Web Application
 
-A Dockerized multi-container web application using *Flask, **PostgreSQL, and **Nginx, deployed on **AWS EC2* with automated *CI/CD* using *GitHub Actions*.
+A complete web application with automated CI/CD, Kubernetes deployment, and OCI packaging.
 
-## Description
-This project demonstrates a complete web application setup with multiple containers:
-- *Flask* – Backend API
-- *PostgreSQL* – Database
-- *Nginx* – Reverse proxy
-- Dockerized for easy deployment
-- Automated CI/CD pipeline to deploy updates to AWS EC2
+## Overview
+
+This project demonstrates a production-ready web application with multiple deployment strategies:
+
+- *Docker Compose* – Local development and testing
+- *Kubernetes* – Production deployment with GitOps
+- *OCI Rock* – Container image built with Canonical Rockcraft
+
+### Core Components
+
+| Component | Purpose |
+|-----------|---------|
+| Flask | Backend API (Python) |
+| PostgreSQL | Relational database |
+| Nginx | Reverse proxy and load balancer |
+| Kubernetes | Container orchestration |
+| GitHub Actions | CI/CD automation |
+
+## Table of Contents
+
+- [Architecture](#architecture)
+- [Features](#features)
+- [Local Development](#local-development)
+- [Kubernetes Deployment](#kubernetes-deployment)
+- [GitOps Workflow](#gitops-workflow)
+- [OCI Rock Packaging](#oci-rock-packaging)
+- [Project Structure](#project-structure)
+- [Deployment](#deployment)
+- [Technologies](#technologies)
+
+## Architecture
+
+
+┌─────────────┐     ┌──────────┐     ┌────────────┐
+│   Browser   │ ──> │  Nginx   │ ──> │   Flask    │
+└─────────────┘     └──────────┘     └────────────┘
+                           │                │
+                           │                ▼
+                           │         ┌────────────┐
+                           └────────>│ PostgreSQL │
+                                     └────────────┘
+
 
 ## Features
-- Dockerized multi-container architecture
-- PostgreSQL database integration
-- Reverse proxy with Nginx
-- Automated CI/CD with GitHub Actions
 
-## Local Setup
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/david-onwuka/dockerized-multi-container-flask-app
+- ✅ Dockerized multi-container architecture
+- ✅ PostgreSQL with persistent storage (Kubernetes PVC)
+- ✅ Nginx reverse proxy for load balancing
+- ✅ Kubernetes Deployments and Services
+- ✅ Kustomize for environment-specific configuration
+- ✅ GitHub Container Registry (GHCR) for image storage
+- ✅ Automated CI/CD with GitHub Actions
+- ✅ GitOps-based deployment workflow
+- ✅ OCI Rock packaging with Canonical Rockcraft
+- ✅ Immutable image tags (Git commit SHA)
+
+## Local Development
+
+### Prerequisites
+
+- Docker and Docker Compose
+- Python 3.10+
+- PostgreSQL client (optional)
+
+### Clone and Run
+
+bash
+git clone https://github.com/david-onwuka/dockerized-multi-container-flask-app
+cd dockerized-multi-container-flask-app
+docker-compose up --build
 
 
-## GitOps CI/CD Upgrade
+Access the application at http://localhost:80
 
-This project was extended with a GitOps-based Kubernetes deployment workflow.
+## Kubernetes Deployment
 
-### Architecture
+### Validate Configuration
 
-- Flask application containerized with Docker
-- PostgreSQL database with persistent storage
-- Nginx reverse proxy
-- Kubernetes Deployments and Services
-- Kubernetes Secret for database configuration
-- PersistentVolumeClaim for PostgreSQL storage
-- Kustomize for Kubernetes configuration management
-- GitHub Container Registry (GHCR) for container images
-- GitHub Actions for CI/CD automation
+bash
+kubectl kustomize k8s/
 
-### GitOps Workflow
 
-1. Code is pushed to the main branch.
-2. GitHub Actions builds the Docker image.
-3. The image is pushed to GHCR using the Git commit SHA as an immutable tag.
-4. GitHub Actions automatically updates k8s/kustomization.yaml with the new image SHA.
-5. The updated Kubernetes configuration is committed back to Git.
-6. Kubernetes configuration remains version-controlled as the desired deployment state.
+### Deploy to Cluster
 
-### Key GitOps Practice
+bash
+kubectl apply -k k8s/
 
-Instead of deploying directly from the CI pipeline, the Kubernetes deployment configuration is maintained in Git. Container image versions are referenced by immutable commit SHA rather than relying on the mutable latest tag.
 
-### Validation
+### Components
 
-The Kubernetes configuration was validated locally with:
+- *Deployments*: Flask (3 replicas), PostgreSQL
+- *Services*: Flask (ClusterIP), PostgreSQL (ClusterIP), Nginx (LoadBalancer)
+- *Secrets*: Database credentials (Base64 encoded)
+- *PVC*: PostgreSQL persistent storage (10Gi)
 
-```bash
-kubectl kustomize k8s
+## GitOps Workflow
+
+The project follows GitOps principles where Git serves as the single source of truth.
+
+
+┌──────────────┐     ┌─────────────────┐     ┌────────────────┐
+│  Push Code   │ ──> │ GitHub Actions  │ ──> │ Build & Push   │
+│  to main     │     │ Build Image     │     │ to GHCR        │
+└──────────────┘     └─────────────────┘     └────────────────┘
+                                                      │
+                                                      ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Update kustomization.yaml                     │
+│     (Automatically commit new image SHA)                  │
+└─────────────────────────────────────────────────────────────┘
+                                                      │
+                                                      ▼
+┌─────────────────────────────────────────────────────────────┐
+│          Kubernetes Cluster Pulls New Image               │
+│     (Manual apply or ArgoCD for automated sync)          │
+└─────────────────────────────────────────────────────────────┘
+
+
+### Key Practices
+
+1. *Immutable Tags* – Images are tagged with Git commit SHA (sha-<commit>)
+2. *Version Control* – All Kubernetes manifests are stored in Git
+3. *Automated Updates* – CI updates image references automatically
+4. *Declarative Config* – Desired state is defined in YAML manifests
+
+## OCI Rock Packaging
+
+The application is also packaged as an OCI-compliant Rock using Canonical Rockcraft.
+
+### Build
+
+bash
+rockcraft pack --destructive-mode
+
+
+Output: dockerized-multi-container-flask-app_0.1_amd64.rock
+
+### Import and Run
+
+bash
+sudo rockcraft.skopeo --insecure-policy copy oci-archive:dockerized-multi-container-flask-app_0.1_amd64.rock docker-daemon:flask-rock:latest
+docker run -p 8000:8000 flask-rock:latest
+
+
+### Rock Components
+
+- *Base*: Ubuntu 24.04 (minimal)
+- *Framework*: Flask with Gunicorn
+- *Runtime*: Pebble for service management
+- *Dependencies*: libpq5 for PostgreSQL connectivity
+
+## Project Structure
+
+
+.
+├── .github/
+│   └── workflows/
+│       └── ci-cd.yml              # GitHub Actions pipeline
+├── k8s/
+│   ├── deployment.yaml            # Flask deployment
+│   ├── postgres-deployment.yaml   # PostgreSQL deployment
+│   ├── postgres-pvc.yaml          # Persistent volume claim
+│   ├── postgres-secret.yaml       # Database credentials
+│   ├── service.yaml               # Flask service
+│   ├── postgres-service.yaml      # PostgreSQL service
+│   ├── nginx-service.yaml         # Nginx service
+│   ├── nginx-config.yaml          # Nginx configuration
+│   └── kustomization.yaml         # Kustomize configuration
+├── app/
+│   ├── app.py                     # Flask application
+│   └── requirements.txt           # Python dependencies
+├── docker-compose.yml
+├── Dockerfile
+├── rockcraft.yaml                 # Rockcraft specification
+└── README.md
+
+
+## Deployment Options
+
+### Option 1: Docker Compose (Local)
+bash
+docker-compose up -d
+
+
+### Option 2: Kubernetes (Production)
+bash
+kubectl apply -k k8s/
+
+
+### Option 3: OCI Rock (Standalone)
+bash
+docker run -p 8000:8000 flask-rock:latest
+
+
+## CI/CD Pipeline
+
+The GitHub Actions workflow automates:
+
+1. Build Docker image
+2. Push to GHCR with SHA tag
+3. Update kustomization.yaml with new image
+4. Commit changes back to repository
+5. Trigger deployment (manual or automated with ArgoCD)
+
+## Technologies
+
+### Core
+- *Backend*: Flask (Python 3.10)
+- *Database*: PostgreSQL
+- *Web Server*: Nginx
+- *Containerization*: Docker
+
+### Orchestration & Deployment
+- *Orchestration*: Kubernetes
+- *Configuration*: Kustomize
+- *CI/CD*: GitHub Actions
+- *Registry*: GitHub Container Registry (GHCR)
+- *GitOps*: Git as source of truth
+
+### Packaging
+- *Container Builder*: Canonical Rockcraft
+- *Service Manager*: Pebble
+- *WSGI Server*: Gunicorn
+
+## License
+
+This project is open source and available under the MIT License.
+
+---
+
+*Maintainer*: David Onwuka  
+*Repository*: [github.com/david-onwuka/dockerized-multi-container-flask-app](https://github.com/david-onwuka/dockerized-multi-container-flask-app)
