@@ -10,4 +10,4 @@ resources:
 images:
   - name: ghcr.io/david-onwuka/dockerized-multi-container-flask-app
     newName: ghcr.io/david-onwuka/dockerized-multi-container-flask-app
-    newTag: 04fa87e3854ddadfa81675da88a69cddfc58520e
+    newTag: b2b671a5836899bcee02208b1bc7b3abb3e4f009
