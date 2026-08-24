@@ -1,13 +1,13 @@
 # Dockerized Multi-Container Web Application
 
-A complete web application with automated CI/CD, Kubernetes deployment, and OCI packaging.
+A web application with Docker, Kubernetes configuration, and OCI packaging.
 
 ## Overview
 
-This project demonstrates a production-ready web application with multiple deployment strategies:
+This project demonstrates a web application with multiple deployment strategies:
 
 - *Docker Compose* – Local development and testing
-- *Kubernetes* – Production deployment with GitOps
+- *Kubernetes* – Deployment configuration with GitOps-style updates
 - *OCI Rock* – Container image built with Canonical Rockcraft
 
 ### Core Components
@@ -16,8 +16,8 @@ This project demonstrates a production-ready web application with multiple deplo
 |-----------|---------|
 | Flask | Backend API (Python) |
 | PostgreSQL | Relational database |
-| Nginx | Reverse proxy and load balancer |
-| Kubernetes | Container orchestration |
+| Nginx | Reverse proxy |
+| Kubernetes | Container orchestration configuration |
 | GitHub Actions | CI/CD automation |
 
 ## Table of Contents
@@ -49,12 +49,12 @@ This project demonstrates a production-ready web application with multiple deplo
 
 - ✅ Dockerized multi-container architecture
 - ✅ PostgreSQL with persistent storage (Kubernetes PVC)
-- ✅ Nginx reverse proxy for load balancing
+- ✅ Nginx reverse proxy
 - ✅ Kubernetes Deployments and Services
 - ✅ Kustomize for environment-specific configuration
 - ✅ GitHub Container Registry (GHCR) for image storage
 - ✅ Automated CI/CD with GitHub Actions
-- ✅ GitOps-based deployment workflow
+- ✅ GitOps-style workflow (image updates committed to Git)
 - ✅ OCI Rock packaging with Canonical Rockcraft
 - ✅ Immutable image tags (Git commit SHA)
 
@@ -99,7 +99,7 @@ kubectl apply -k k8s/
 
 ## GitOps Workflow
 
-The project follows GitOps principles where Git serves as the single source of truth.
+The project follows GitOps principles where Git serves as the single source of truth for configuration.
 
 
 ┌──────────────┐     ┌─────────────────┐     ┌────────────────┐
@@ -112,12 +112,6 @@ The project follows GitOps principles where Git serves as the single source of t
 │              Update kustomization.yaml                     │
 │     (Automatically commit new image SHA)                  │
 └─────────────────────────────────────────────────────────────┘
-                                                      │
-                                                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│          Kubernetes Cluster Pulls New Image               │
-│     (Manual apply or ArgoCD for automated sync)          │
-└─────────────────────────────────────────────────────────────┘
 
 
 ### Key Practices
@@ -129,7 +123,7 @@ The project follows GitOps principles where Git serves as the single source of t
 
 ## OCI Rock Packaging
 
-The application is also packaged as an OCI-compliant Rock using Canonical Rockcraft.
+The application is packaged as an OCI-compliant Rock using Canonical Rockcraft.
 
 ### Build
 
@@ -145,6 +139,12 @@ bash
 sudo rockcraft.skopeo --insecure-policy copy oci-archive:dockerized-multi-container-flask-app_0.1_amd64.rock docker-daemon:flask-rock:latest
 docker run -p 8000:8000 flask-rock:latest
 
+
+### Validation
+
+The Rock was successfully built with Rockcraft 1.20.0 and imported into Docker. The container started successfully with Pebble managing the Gunicorn process, and the Flask application returned an HTTP 200 OK response when accessed on port 8000.
+
+The standalone Rock was tested independently from the PostgreSQL container. Because the external postgres_db service was not available in the standalone Docker network, the application reported a database hostname-resolution error. The HTTP service itself was running and responding to requests.
 
 ### Rock Components
 
@@ -186,7 +186,7 @@ bash
 docker-compose up -d
 
 
-### Option 2: Kubernetes (Production)
+### Option 2: Kubernetes
 bash
 kubectl apply -k k8s/
 
@@ -204,7 +204,6 @@ The GitHub Actions workflow automates:
 2. Push to GHCR with SHA tag
 3. Update kustomization.yaml with new image
 4. Commit changes back to repository
-5. Trigger deployment (manual or automated with ArgoCD)
 
 ## Technologies
 
